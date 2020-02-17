@@ -22,6 +22,7 @@ package cmd
 
 import (
 	"context"
+	"encoding/json"
 	"errors"
 	"fmt"
 	"sync/atomic"
@@ -175,13 +176,31 @@ func quitIfInSync(transferJobInitiated, anyDestinationFileDeleted bool, cca *coo
 	if !transferJobInitiated && !anyDestinationFileDeleted {
 		cca.reportScanningProgress(glcm, 0)
 		glcm.Exit(func(format common.OutputFormat) string {
-			return "The source and destination are already in sync."
+			jsonOutput := struct {
+				JobID string
+				Msg   string
+			}{
+				JobID: cca.jobID.String(),
+				Msg:   "The source and destination are already in sync.",
+			}
+			outputString, _ := json.Marshal(jsonOutput)
+			//return "The source and destination are already in sync."
+			return string(outputString)
 		}, common.EExitCode.Success())
 	} else if !transferJobInitiated && anyDestinationFileDeleted {
 		// some files were deleted but no transfer scheduled
 		cca.reportScanningProgress(glcm, 0)
 		glcm.Exit(func(format common.OutputFormat) string {
-			return "The source and destination are now in sync."
+			jsonOutput := struct {
+				JobID string
+				Msg   string
+			}{
+				JobID: cca.jobID.String(),
+				Msg:   "The source and destination are now in sync.",
+			}
+			outputString, _ := json.Marshal(jsonOutput)
+			return string(outputString)
+			//return "The source and destination are now in sync."
 		}, common.EExitCode.Success())
 	}
 }

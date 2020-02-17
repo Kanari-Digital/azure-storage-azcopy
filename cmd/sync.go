@@ -341,6 +341,7 @@ func (cca *cookedSyncCmdArgs) Cancel(lcm common.LifecycleMgr) {
 }
 
 type scanningProgressJsonTemplate struct {
+	JobID                     string
 	FilesScannedAtSource      uint64
 	FilesScannedAtDestination uint64
 }
@@ -353,6 +354,7 @@ func (cca *cookedSyncCmdArgs) reportScanningProgress(lcm common.LifecycleMgr, th
 
 		if format == common.EOutputFormat.Json() {
 			jsonOutputTemplate := scanningProgressJsonTemplate{
+				JobID:                     cca.jobID.String(),
 				FilesScannedAtSource:      srcScanned,
 				FilesScannedAtDestination: dstScanned,
 			}
@@ -553,7 +555,16 @@ func init() {
 			cooked.commandString = copyHandlerUtil{}.ConstructCommandStringFromArgs()
 			err = cooked.process()
 			if err != nil {
-				glcm.Error("Cannot perform sync due to error: " + err.Error())
+				jsonOutput := struct {
+					JobID string
+					Error string
+				}{
+					JobID: cooked.jobID.String(),
+					Error: err.Error(),
+				}
+				outputString, _ := json.Marshal(jsonOutput)
+				//glcm.Error("Cannot perform sync due to error: " + err.Error())
+				glcm.Error(string(outputString))
 			}
 
 			glcm.SurrenderControl()
